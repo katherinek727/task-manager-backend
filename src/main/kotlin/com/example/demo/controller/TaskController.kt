@@ -1,43 +1,40 @@
 package com.example.demo.controller
 
-import com.example.demo.dto.CreateTaskRequest
+import com.example.demo.dto.TaskRequest
 import com.example.demo.dto.TaskResponse
-import com.example.demo.dto.UpdateTaskStatusRequest
 import com.example.demo.model.TaskStatus
 import com.example.demo.service.TaskService
-import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import javax.validation.Valid
 
 @RestController
 @RequestMapping("/api/tasks")
-class TaskController(private val service: TaskService) {
+class TaskController(private val taskService: TaskService) {
 
     @PostMapping
-    fun createTask(@Valid @RequestBody request: CreateTaskRequest): Mono<TaskResponse> =
-        service.createTask(request)
+    fun createTask(@Valid @RequestBody request: TaskRequest): Mono<TaskResponse> =
+        taskService.createTask(request)
 
     @GetMapping("/{id}")
     fun getTaskById(@PathVariable id: Long): Mono<TaskResponse> =
-        service.getTaskById(id)
+        taskService.getTaskById(id)
 
     @GetMapping
     fun getTasks(
         @RequestParam page: Int,
         @RequestParam size: Int,
         @RequestParam(required = false) status: TaskStatus?
-    ): Flux<TaskResponse> =
-        service.getTasks(page, size, status)
+    ): Flux<TaskResponse> = taskService.getTasks(page, size, status)
 
     @PatchMapping("/{id}/status")
-    fun updateTaskStatus(
-        @PathVariable id: Long,
-        @RequestBody request: UpdateTaskStatusRequest
-    ): Mono<TaskResponse> =
-        service.updateStatus(id, request)
+    fun updateStatus(@PathVariable id: Long, @RequestBody statusRequest: Map<String,String>): Mono<TaskResponse> {
+        val status = TaskStatus.valueOf(statusRequest["status"]!!)
+        return taskService.updateStatus(id, status)
+    }
 
     @DeleteMapping("/{id}")
     fun deleteTask(@PathVariable id: Long): Mono<Void> =
-        service.deleteTask(id)
+        taskService.deleteTask(id)
 }
