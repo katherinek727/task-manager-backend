@@ -1,7 +1,7 @@
 package com.example.demo.dto
 
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.Size
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 
 data class TaskRequest(
     @field:NotBlank(message = "Title must not be blank")

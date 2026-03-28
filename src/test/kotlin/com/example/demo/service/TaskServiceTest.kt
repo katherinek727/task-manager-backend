@@ -35,7 +35,7 @@ class TaskServiceTest {
         every { repository.save(any()) } returns Mono.just(task)
 
         StepVerifier.create(service.createTask(request))
-            .expectNextMatches { it.id == 1L && it.title == "Test Task" }
+            .expectNextMatches { it.id == 1L && it.title == "Test Task" && it.status == "NEW" }
             .verifyComplete()
     }
 
@@ -50,7 +50,7 @@ class TaskServiceTest {
     }
 
     @Test
-    fun `getTaskById should return error when task missing`() {
+    fun `getTaskById should throw TaskNotFoundException when task missing`() {
         every { repository.findById(1L) } returns Mono.empty()
 
         StepVerifier.create(service.getTaskById(1L))
@@ -65,12 +65,21 @@ class TaskServiceTest {
         every { repository.findById(1L) } returns Mono.just(task)
 
         StepVerifier.create(service.updateStatus(1L, UpdateTaskStatusRequest(TaskStatus.DONE)))
-            .expectNextMatches { it.status == TaskStatus.DONE }
+            .expectNextMatches { it.status == "DONE" }
             .verifyComplete()
     }
 
     @Test
-    fun `deleteTask should complete when task exists`() {
+    fun `updateStatus should throw TaskNotFoundException when task missing`() {
+        every { repository.updateStatus(1L, TaskStatus.DONE, any()) } returns Mono.just(0)
+
+        StepVerifier.create(service.updateStatus(1L, UpdateTaskStatusRequest(TaskStatus.DONE)))
+            .expectError(TaskNotFoundException::class.java)
+            .verify()
+    }
+
+    @Test
+    fun `deleteTask should complete`() {
         every { repository.deleteById(1L) } returns Mono.just(1)
 
         StepVerifier.create(service.deleteTask(1L))
@@ -78,15 +87,38 @@ class TaskServiceTest {
     }
 
     @Test
-    fun `getTasks should return list of tasks`() {
+    fun `getTasks should return paginated response`() {
+        val now = LocalDateTime.now()
         val tasks = listOf(
-            Task(1L, "Test1", "Desc1", TaskStatus.NEW, LocalDateTime.now(), LocalDateTime.now()),
-            Task(2L, "Test2", "Desc2", TaskStatus.NEW, LocalDateTime.now(), LocalDateTime.now())
+            Task(1L, "Test1", "Desc1", TaskStatus.NEW, now, now),
+            Task(2L, "Test2", "Desc2", TaskStatus.NEW, now, now)
         )
         every { repository.findAll(0, 10, TaskStatus.NEW) } returns Flux.fromIterable(tasks)
+        every { repository.count(TaskStatus.NEW) } returns Mono.just(2L)
 
         StepVerifier.create(service.getTasks(0, 10, TaskStatus.NEW))
-            .expectNextCount(2)
+            .expectNextMatches {
+                it.content.size == 2 &&
+                it.totalElements == 2L &&
+                it.totalPages == 1 &&
+                it.page == 0 &&
+                it.size == 10
+            }
+            .verifyComplete()
+    }
+
+    @Test
+    fun `getTasks without filter should return all tasks`() {
+        val now = LocalDateTime.now()
+        val tasks = listOf(
+            Task(1L, "Test1", null, TaskStatus.NEW, now, now),
+            Task(2L, "Test2", null, TaskStatus.DONE, now, now)
+        )
+        every { repository.findAll(0, 10, null) } returns Flux.fromIterable(tasks)
+        every { repository.count(null) } returns Mono.just(2L)
+
+        StepVerifier.create(service.getTasks(0, 10, null))
+            .expectNextMatches { it.content.size == 2 && it.totalElements == 2L }
             .verifyComplete()
     }
 }
