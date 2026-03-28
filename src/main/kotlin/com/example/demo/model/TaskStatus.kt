@@ -1,8 +1,7 @@
 package com.example.demo.model
 
 enum class TaskStatus {
-    NEW,
+    TODO,
     IN_PROGRESS,
-    DONE,
-    CANCELLED
+    DONE
 }

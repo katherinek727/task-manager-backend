@@ -3,7 +3,7 @@ package com.example.demo.model
 import java.time.LocalDateTime
 
 data class Task(
-    val id: Long?,
+    val id: Long? = null,
     val title: String,
     val description: String?,
     val status: TaskStatus,
