@@ -2,14 +2,14 @@ package com.example.demo.repository
 
 import com.example.demo.model.Task
 import com.example.demo.model.TaskStatus
-import org.springframework.r2dbc.core.DatabaseClient
+import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.time.LocalDateTime
 
 @Repository
-class TaskRepositories(private val client: DatabaseClient) {
+class TaskRepositories(private val jdbcClient: JdbcClient)
 
     fun save(task: Task): Mono<Long> {
         return client.sql(
