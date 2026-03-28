@@ -1,13 +1,12 @@
 package com.example.demo.dto
 
-import com.example.demo.model.TaskStatus
 import java.time.LocalDateTime
 
 data class TaskResponse(
     val id: Long,
     val title: String,
     val description: String?,
-    val status: TaskStatus,
+    val status: String,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
