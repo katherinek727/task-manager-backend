@@ -1,33 +1,26 @@
 package com.example.demo.exception
 
 import org.springframework.http.HttpStatus
-import org.springframework.validation.FieldError
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import org.springframework.web.bind.support.WebExchangeBindException
-import reactor.core.publisher.Mono
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
+    // ✅ Task not found → 404
     @ExceptionHandler(TaskNotFoundException::class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    fun handleNotFound(e: TaskNotFoundException): Mono<Map<String, String>> =
-        Mono.just(mapOf("error" to (e.message ?: "Not found")))
-
-    @ExceptionHandler(WebExchangeBindException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleValidation(e: WebExchangeBindException): Mono<Map<String, Any>> {
-        val errors = e.bindingResult.allErrors.associate { error ->
-            val field = if (error is FieldError) error.field else "error"
-            field to (error.defaultMessage ?: "Invalid value")
-        }
-        return Mono.just(mapOf("errors" to errors))
+    fun handleTaskNotFound(ex: TaskNotFoundException): ResponseEntity<Map<String, String>> {
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(mapOf("error" to ex.message!!))
     }
 
-    @ExceptionHandler(IllegalArgumentException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleIllegalArgument(e: IllegalArgumentException): Mono<Map<String, String>> =
-        Mono.just(mapOf("error" to (e.message ?: "Bad request")))
+    // ✅ fallback (any unexpected error → 500)
+    @ExceptionHandler(Exception::class)
+    fun handleGeneral(ex: Exception): ResponseEntity<Map<String, String>> {
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(mapOf("error" to (ex.message ?: "Unexpected error")))
+    }
 }

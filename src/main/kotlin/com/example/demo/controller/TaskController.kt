@@ -6,6 +6,8 @@ import com.example.demo.mapper.TaskMapper
 import com.example.demo.model.TaskStatus
 import com.example.demo.service.TaskService
 import org.springframework.web.bind.annotation.*
+import com.example.demo.exception.TaskNotFoundException
+
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -43,10 +45,11 @@ class TaskController(
     @GetMapping("/{id}")
     fun getById(@PathVariable id: Long): TaskResponse {
         val task = taskService.getById(id)
-            ?: throw RuntimeException("Task not found with id: $id")
+            ?: throw TaskNotFoundException("Task not found with id: $id")
 
         return TaskMapper.toResponse(task)
     }
+
 
     // =========================
     // UPDATE STATUS ONLY
