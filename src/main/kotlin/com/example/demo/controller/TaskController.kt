@@ -9,30 +9,75 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/tasks")
-class TaskController(private val taskService: TaskService) {
+class TaskController(
+    private val taskService: TaskService
+) {
 
+    // =========================
+    // CREATE TASK
+    // =========================
     @PostMapping
-    fun createTask(@RequestBody request: TaskRequest): TaskResponse {
-        val task = taskService.create(request)
-        return TaskMapper.toResponse(task)
+    fun create(@RequestBody request: TaskRequest): TaskResponse {
+        val task = TaskMapper.toEntity(request)
+        val saved = taskService.create(task)
+        return TaskMapper.toResponse(saved)
     }
 
-    @GetMapping("/{id}")
-    fun getTaskById(@PathVariable id: Long): TaskResponse? {
-        return taskService.getById(id)?.let { TaskMapper.toResponse(it) }
-    }
-
+    // =========================
+    // GET ALL TASKS (pagination + optional filter)
+    // =========================
     @GetMapping
-    fun getTasks(
+    fun getAll(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) status: TaskStatus?
     ): List<TaskResponse> {
-        return taskService.getAll(page, size, status)
-            .map { TaskMapper.toResponse(it) }
+
+        val tasks = taskService.getAll(page, size, status)
+        return tasks.map { TaskMapper.toResponse(it) }
     }
 
+    // =========================
+    // GET TASK BY ID
+    // =========================
+    @GetMapping("/{id}")
+    fun getById(@PathVariable id: Long): TaskResponse {
+        val task = taskService.getById(id)
+            ?: throw RuntimeException("Task not found with id: $id")
+
+        return TaskMapper.toResponse(task)
+    }
+
+    // =========================
+    // UPDATE STATUS ONLY
+    // =========================
+    @PatchMapping("/{id}/status")
+    fun updateStatus(
+        @PathVariable id: Long,
+        @RequestParam status: TaskStatus
+    ): String {
+
+        val updatedRows = taskService.updateStatus(id, status)
+
+        if (updatedRows == 0) {
+            throw RuntimeException("Task not found with id: $id")
+        }
+
+        return "Status updated successfully"
+    }
+
+    // =========================
+    // DELETE TASK
+    // =========================
     @DeleteMapping("/{id}")
-    fun deleteTask(@PathVariable id: Long): Int =
-        taskService.deleteById(id)
+    fun delete(@PathVariable id: Long): String {
+
+        val deletedRows = taskService.deleteById(id)
+
+        if (deletedRows == 0) {
+            throw RuntimeException("Task not found with id: $id")
+        }
+
+        return "Task deleted successfully"
+    }
 }

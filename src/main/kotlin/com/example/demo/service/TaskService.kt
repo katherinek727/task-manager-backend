@@ -1,7 +1,5 @@
 package com.example.demo.service
 
-import com.example.demo.dto.TaskRequest
-import com.example.demo.mapper.TaskMapper
 import com.example.demo.model.Task
 import com.example.demo.model.TaskStatus
 import com.example.demo.repository.TaskRepository
@@ -11,20 +9,27 @@ import java.time.LocalDateTime
 @Service
 class TaskService(private val repository: TaskRepository) {
 
-    fun create(request: TaskRequest): Task {
-        val task = TaskMapper.toEntity(request)
+    fun create(task: Task): Task {
         return repository.save(task)
     }
 
-    fun getById(id: Long): Task? =
-        repository.findById(id)
+    fun getById(id: Long): Task? {
+        return repository.findById(id)
+    }
 
-    fun getAll(page: Int, size: Int, status: TaskStatus?): List<Task> =
-        repository.findAll(page, size, status)
+    fun getAll(page: Int, size: Int, status: TaskStatus?): List<Task> {
+        return repository.findAll(page, size, status)
+    }
 
-    fun updateStatus(id: Long, status: TaskStatus): Int =
-        repository.updateStatus(id, status, LocalDateTime.now())
+    fun count(status: TaskStatus?): Long {
+        return repository.count(status)
+    }
 
-    fun deleteById(id: Long): Int =
-        repository.deleteById(id)
+    fun updateStatus(id: Long, status: TaskStatus): Int {
+        return repository.updateStatus(id, status, LocalDateTime.now())
+    }
+
+    fun deleteById(id: Long): Int {
+        return repository.deleteById(id)
+    }
 }
