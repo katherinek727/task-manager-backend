@@ -46,9 +46,9 @@ com.example.demo
 
 # ⚙️ Setup & Run
 
-1. Clone repository
 
 ```bash
+1. Clone repository
 git clone <your-repo-url>
 cd demo 
 
