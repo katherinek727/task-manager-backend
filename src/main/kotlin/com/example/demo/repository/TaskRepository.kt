@@ -11,73 +11,90 @@ import java.time.LocalDateTime
 @Repository
 class TaskRepository(private val client: DatabaseClient) {
 
-    fun save(task: Task): Mono<Task> {
-        val sql = """
-            INSERT INTO tasks (title, description, status, created_at, updated_at)
+    // CREATE TASK
+    fun save(task: Task): Mono<Long> {
+        return client.sql(
+            """
+            INSERT INTO tasks(title, description, status, created_at, updated_at)
             VALUES (:title, :description, :status, :createdAt, :updatedAt)
             RETURNING id
-        """
-        return client.sql(sql)
-            .bind("title", task.title)
-            .bind("description", task.description)
+            """.trimIndent()
+        )
+            .bind("title", task.title)                   // title is non-null
+            .bind("description", task.description ?: "") // description can be nullable
             .bind("status", task.status.name)
             .bind("createdAt", task.createdAt)
             .bind("updatedAt", task.updatedAt)
-            .map { row -> task.copy(id = row.get("id", java.lang.Long::class.java)?.toLong()) }
+            .map { row -> row["id"] as Long }           // RETURNING id gives Long
             .one()
     }
 
+    // FIND BY ID
     fun findById(id: Long): Mono<Task> {
-        val sql = "SELECT * FROM tasks WHERE id = :id"
-        return client.sql(sql)
+        return client.sql("SELECT * FROM tasks WHERE id = :id")
             .bind("id", id)
-            .map { row ->
+            .map { row, _ ->
                 Task(
-                    id = row.get("id", java.lang.Long::class.java)?.toLong(),
-                    title = row.get("title", String::class.java)!!,
-                    description = row.get("description", String::class.java),
-                    status = TaskStatus.valueOf(row.get("status", String::class.java)!!),
-                    createdAt = row.get("created_at", LocalDateTime::class.java)!!,
-                    updatedAt = row.get("updated_at", LocalDateTime::class.java)!!
+                    id = row["id"] as Long,
+                    title = row["title"] as String,
+                    description = row["description"] as? String,
+                    status = TaskStatus.valueOf(row["status"] as String),
+                    createdAt = row["created_at"] as LocalDateTime,
+                    updatedAt = row["updated_at"] as LocalDateTime
                 )
             }
             .one()
     }
 
+    // LIST WITH PAGINATION AND OPTIONAL STATUS
     fun findAll(page: Int, size: Int, status: TaskStatus?): Flux<Task> {
-        val offset = page * size
-        val baseSql = StringBuilder("SELECT * FROM tasks")
-        status?.let { baseSql.append(" WHERE status = '$status'") }
-        baseSql.append(" ORDER BY created_at DESC LIMIT $size OFFSET $offset")
-        return client.sql(baseSql.toString())
-            .map { row ->
-                Task(
-                    id = row.get("id", java.lang.Long::class.java)?.toLong(),
-                    title = row.get("title", String::class.java)!!,
-                    description = row.get("description", String::class.java),
-                    status = TaskStatus.valueOf(row.get("status", String::class.java)!!),
-                    createdAt = row.get("created_at", LocalDateTime::class.java)!!,
-                    updatedAt = row.get("updated_at", LocalDateTime::class.java)!!
-                )
-            }
-            .all()
+        val sql = StringBuilder("SELECT * FROM tasks")
+        if (status != null) {
+            sql.append(" WHERE status = :status")
+        }
+        sql.append(" ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
+
+        val query = client.sql(sql.toString())
+            .bind("limit", size)
+            .bind("offset", page * size)
+
+        if (status != null) query.bind("status", status.name)
+
+        return query.map { row, _ ->
+            Task(
+                id = row["id"] as Long,
+                title = row["title"] as String,
+                description = row["description"] as? String,
+                status = TaskStatus.valueOf(row["status"] as String),
+                createdAt = row["created_at"] as LocalDateTime,
+                updatedAt = row["updated_at"] as LocalDateTime
+            )
+        }.all()
     }
 
+    // UPDATE STATUS
     fun updateStatus(id: Long, status: TaskStatus, updatedAt: LocalDateTime): Mono<Int> {
-        val sql = "UPDATE tasks SET status = :status, updated_at = :updatedAt WHERE id = :id"
-        return client.sql(sql)
+        return client.sql(
+            """
+            UPDATE tasks
+            SET status = :status, updated_at = :updatedAt
+            WHERE id = :id
+            """
+        )
             .bind("status", status.name)
             .bind("updatedAt", updatedAt)
             .bind("id", id)
             .fetch()
-            .rowsUpdated()
+            .rowsUpdated()        // returns Mono<Long>
+            .map { it.toInt() }   // convert to Mono<Int>
     }
 
+    // DELETE TASK
     fun deleteById(id: Long): Mono<Int> {
-        val sql = "DELETE FROM tasks WHERE id = :id"
-        return client.sql(sql)
+        return client.sql("DELETE FROM tasks WHERE id = :id")
             .bind("id", id)
             .fetch()
             .rowsUpdated()
+            .map { it.toInt() }
     }
 }

@@ -7,6 +7,7 @@ import com.example.demo.model.Task
 import com.example.demo.model.TaskStatus
 import com.example.demo.repository.TaskRepository
 import com.example.demo.exception.TaskNotFoundException
+import com.example.demo.mapper.toResponse
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
