@@ -11,25 +11,23 @@ import java.time.LocalDateTime
 @Repository
 class TaskRepository(private val client: DatabaseClient) {
 
-    // CREATE TASK
     fun save(task: Task): Mono<Long> {
         return client.sql(
             """
             INSERT INTO tasks(title, description, status, created_at, updated_at)
             VALUES (:title, :description, :status, :createdAt, :updatedAt)
             RETURNING id
-            """.trimIndent()
+            """
         )
-            .bind("title", task.title)                   // title is non-null
-            .bind("description", task.description ?: "") // description can be nullable
+            .bind("title", task.title)
+            .bind("description", task.description ?: "")
             .bind("status", task.status.name)
             .bind("createdAt", task.createdAt)
             .bind("updatedAt", task.updatedAt)
-            .map { row -> row["id"] as Long }           // RETURNING id gives Long
+            .map { row -> row["id"] as Long }
             .one()
     }
 
-    // FIND BY ID
     fun findById(id: Long): Mono<Task> {
         return client.sql("SELECT * FROM tasks WHERE id = :id")
             .bind("id", id)
@@ -46,12 +44,9 @@ class TaskRepository(private val client: DatabaseClient) {
             .one()
     }
 
-    // LIST WITH PAGINATION AND OPTIONAL STATUS
     fun findAll(page: Int, size: Int, status: TaskStatus?): Flux<Task> {
         val sql = StringBuilder("SELECT * FROM tasks")
-        if (status != null) {
-            sql.append(" WHERE status = :status")
-        }
+        if (status != null) sql.append(" WHERE status = :status")
         sql.append(" ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
 
         val query = client.sql(sql.toString())
@@ -72,24 +67,18 @@ class TaskRepository(private val client: DatabaseClient) {
         }.all()
     }
 
-    // UPDATE STATUS
     fun updateStatus(id: Long, status: TaskStatus, updatedAt: LocalDateTime): Mono<Int> {
         return client.sql(
-            """
-            UPDATE tasks
-            SET status = :status, updated_at = :updatedAt
-            WHERE id = :id
-            """
+            "UPDATE tasks SET status = :status, updated_at = :updatedAt WHERE id = :id"
         )
             .bind("status", status.name)
             .bind("updatedAt", updatedAt)
             .bind("id", id)
             .fetch()
-            .rowsUpdated()        // returns Mono<Long>
-            .map { it.toInt() }   // convert to Mono<Int>
+            .rowsUpdated()
+            .map { it.toInt() }
     }
 
-    // DELETE TASK
     fun deleteById(id: Long): Mono<Int> {
         return client.sql("DELETE FROM tasks WHERE id = :id")
             .bind("id", id)
