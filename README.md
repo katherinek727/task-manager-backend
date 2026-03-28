@@ -1,87 +1,187 @@
-# Task Management API
+# 📝 Task Management REST API
 
-A RESTful task management service built with Kotlin, Spring Boot, WebFlux, and JdbcClient.
+A production-style RESTful API built with **Spring Boot + Kotlin** for managing tasks.  
+This project demonstrates clean architecture, CRUD operations, pagination, DTO mapping, and global exception handling.
 
-## Stack
+---
 
-- Kotlin + Spring Boot 3.4.4
-- Spring WebFlux (reactive HTTP)
-- Project Reactor (Mono/Flux)
-- JdbcClient + native SQL (no ORM)
-- H2 in-memory database
-- Flyway migrations
-- MockK for unit tests
+# 🚀 Features
 
-## Run
+- Create task
+- Get task by ID
+- Get all tasks (pagination + optional status filter)
+- Update task status
+- Delete task
+- DTO-based request/response structure
+- Global exception handling (404, 400, 500)
+- Clean layered architecture
+
+---
+
+# 🛠 Tech Stack
+
+- Kotlin
+- Spring Boot
+- Spring Web
+- Spring JDBC / JPA (depending on setup)
+- H2 Database (default) or PostgreSQL
+- Gradle
+
+---
+
+# 📁 Project Structure
+
+com.example.demo
+│
+├── controller # REST controllers
+├── service # Business logic layer
+├── repository # Database access layer
+├── model # Entity classes
+├── dto # Request / Response DTOs
+├── mapper # Entity ↔ DTO conversion
+├── exception # Global exception handling
+├── common # API response wrapper (optional)
+
+---
+
+# ⚙️ Setup & Run
+
+1. Clone repository
 
 ```bash
+git clone <your-repo-url>
+cd demo 
+
+
+2. Build project
+./gradlew clean build
+
+
+3. Run application
 ./gradlew bootRun
-```
 
-The app starts on `http://localhost:8080`.
+Server runs at:
 
-## Test
+http://localhost:8080
 
-```bash
-./gradlew test
-```
+📌 API ENDPOINTS
 
-## API
-
-### Create task
-```
+📍 Create Task
+Request
 POST /api/tasks
-Content-Type: application/json
-
-{ "title": "Prepare report", "description": "Monthly financial report" }
-```
-
-### Get task by id
-```
-GET /api/tasks/{id}
-```
-
-### List tasks (paginated)
-```
-GET /api/tasks?page=0&size=10&status=NEW
-```
-`status` is optional. Possible values: `NEW`, `IN_PROGRESS`, `DONE`, `CANCELLED`.
-
-Response:
-```json
 {
-  "content": [...],
-  "page": 0,
-  "size": 10,
-  "totalElements": 1,
-  "totalPages": 1
+  "title": "My Task",
+  "description": "Task description"
 }
-```
-
-### Update task status
-```
-PATCH /api/tasks/{id}/status
-Content-Type: application/json
-
-{ "status": "DONE" }
-```
-
-### Delete task
-```
+Response
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "My Task",
+    "description": "Task description",
+    "status": "TODO",
+    "createdAt": "2026-03-28T20:00:00",
+    "updatedAt": "2026-03-28T20:00:00"
+  },
+  "error": null
+}
+📍 Get Task by ID
+Request
+GET /api/tasks/{id}
+Response (success)
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "My Task",
+    "description": "Task description",
+    "status": "TODO",
+    "createdAt": "2026-03-28T20:00:00",
+    "updatedAt": "2026-03-28T20:00:00"
+  },
+  "error": null
+}
+Response (not found)
+{
+  "error": "Task not found with id: 999"
+}
+📍 Get All Tasks
+Request
+GET /api/tasks?page=0&size=10&status=NEW
+Response
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "Task 1",
+      "description": "Example",
+      "status": "TODO"
+    }
+  ],
+  "error": null
+}
+📍 Update Task Status
+Request
+PUT /api/tasks/{id}/status?status=DONE
+📍 Delete Task
+Request
 DELETE /api/tasks/{id}
-```
-Returns `204 No Content`.
+❗ Error Handling
 
-## Project Structure
+Global exception handling is implemented.
 
-```
-src/main/kotlin/com/example/demo/
-├── controller/   # HTTP layer
-├── service/      # Business logic, Mono/Flux
-├── repository/   # JdbcClient + native SQL
-├── model/        # Task, TaskStatus
-├── dto/          # Request/Response DTOs
-├── mapper/       # Task -> TaskResponse
-├── exception/    # TaskNotFoundException, GlobalExceptionHandler
-└── config/       # JdbcConfig
-```
+Standard Errors
+Status	Meaning
+400	Bad Request
+404	Not Found
+500	Internal Server Error
+Example Error Response
+{
+  "error": "Task not found with id: 1"
+}
+🧠 Architecture
+Controller → Service → Repository → Database
+      ↓
+Global Exception Handler
+      ↓
+Standard API Response
+🔥 Key Design Points
+DTO separates API layer from DB layer
+Mapper handles conversion logic
+Service contains business logic only
+Controller handles request/response only
+Global exception handler ensures consistent errors
+📦 Build & Run
+./gradlew clean build
+./gradlew bootRun
+🧪 Testing Tools
+Postman
+IntelliJ HTTP Client
+Curl
+🚀 Future Improvements
+Add Swagger/OpenAPI documentation
+Add JWT authentication (Spring Security)
+Add Flyway/Liquibase migrations
+Add unit/integration tests
+Standardize API response wrapper fully
+👨‍💻 Author
+
+Spring Boot + Kotlin REST API project for learning and backend practice.
+
+📄 License
+
+For educational use only.
+
+
+---
+
+If you want next upgrade, I can help you build:
+
+👉 Swagger UI (auto API docs)  
+👉 JWT login system  
+👉 real production folder architecture  
+👉 Docker deployment  
+
+Just say **“next level”** 🚀
