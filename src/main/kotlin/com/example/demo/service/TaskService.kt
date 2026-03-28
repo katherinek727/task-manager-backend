@@ -16,8 +16,12 @@ class TaskService(private val taskRepository: TaskRepository) {
 
     fun createTask(request: TaskRequest): Mono<TaskResponse> {
         val task = Task(
+            id = null,
             title = request.title,
-            description = request.description
+            description = request.description,
+            status = TaskStatus.NEW,
+            createdAt = LocalDateTime.now(),
+            updatedAt = LocalDateTime.now()
         )
         return taskRepository.save(task)
             .flatMap { id -> taskRepository.findById(id) }
