@@ -1,43 +1,38 @@
 package com.example.demo.controller
 
-import com.example.demo.dto.CreateTaskRequest
-import com.example.demo.dto.PageResponse
-import com.example.demo.dto.TaskResponse
-import com.example.demo.dto.UpdateTaskStatusRequest
+import com.example.demo.model.Task
 import com.example.demo.model.TaskStatus
 import com.example.demo.service.TaskService
-import jakarta.validation.Valid
-import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import reactor.core.publisher.Mono
 
 @RestController
 @RequestMapping("/api/tasks")
 class TaskController(private val taskService: TaskService) {
 
     @PostMapping
-    fun createTask(@Valid @RequestBody request: CreateTaskRequest): Mono<TaskResponse> =
-        taskService.createTask(request)
+    fun createTask(@RequestBody task: Task): Task =
+        taskService.create(task)
 
     @GetMapping("/{id}")
-    fun getTaskById(@PathVariable id: Long): Mono<TaskResponse> =
-        taskService.getTaskById(id)
+    fun getTaskById(@PathVariable id: Long): Task? =
+        taskService.getById(id)
 
     @GetMapping
     fun getTasks(
-        @RequestParam page: Int,
-        @RequestParam size: Int,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) status: TaskStatus?
-    ): Mono<PageResponse<TaskResponse>> = taskService.getTasks(page, size, status)
+    ): List<Task> =
+        taskService.getAll(page, size, status)
 
-    @PatchMapping("/{id}/status")
-    fun updateStatus(
+    @PutMapping("/{id}/status")
+    fun updateTaskStatus(
         @PathVariable id: Long,
-        @Valid @RequestBody request: UpdateTaskStatusRequest
-    ): Mono<TaskResponse> = taskService.updateStatus(id, request)
+        @RequestParam status: TaskStatus
+    ): Int =
+        taskService.updateStatus(id, status)
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun deleteTask(@PathVariable id: Long): Mono<Void> =
-        taskService.deleteTask(id)
+    fun deleteTask(@PathVariable id: Long): Int =
+        taskService.deleteById(id)
 }
