@@ -1,7 +1,8 @@
 package com.example.demo.dto
 
-import com.example.demo.model.TaskStatus
+import javax.validation.constraints.NotBlank
 
 data class UpdateTaskStatusRequest(
-    val status: TaskStatus
+    @field:NotBlank(message = "Status must not be blank")
+    val status: String
 )
