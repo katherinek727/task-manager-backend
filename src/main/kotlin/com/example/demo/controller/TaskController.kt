@@ -2,15 +2,13 @@ package com.example.demo.controller
 
 import com.example.demo.dto.TaskRequest
 import com.example.demo.dto.TaskResponse
+import com.example.demo.dto.UpdateTaskStatusRequest
 import com.example.demo.model.TaskStatus
 import com.example.demo.service.TaskService
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import javax.validation.Valid
-import javax.validation.Valid
-import com.example.demo.dto.TaskRequest
-import com.example.demo.dto.TaskResponse
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -32,8 +30,8 @@ class TaskController(private val taskService: TaskService) {
     ): Flux<TaskResponse> = taskService.getTasks(page, size, status)
 
     @PatchMapping("/{id}/status")
-    fun updateStatus(@PathVariable id: Long, @RequestBody statusRequest: Map<String,String>): Mono<TaskResponse> {
-        val status = TaskStatus.valueOf(statusRequest["status"]!!)
+    fun updateStatus(@PathVariable id: Long, @Valid @RequestBody request: UpdateTaskStatusRequest): Mono<TaskResponse> {
+        val status = TaskStatus.valueOf(request.status)
         return taskService.updateStatus(id, status)
     }
 
